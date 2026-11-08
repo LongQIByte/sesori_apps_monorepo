@@ -1333,6 +1333,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionDetailAttachImage => 'Attach image';
 
   @override
+  String get sessionDetailAttachFile => 'Attach file';
+
+  @override
+  String get sessionDetailAttachmentChoices => 'Add attachment';
+
+  @override
+  String get sessionDetailFileUploadFailed =>
+      'Could not upload file. Select files up to 50 MB and check the bridge connection.';
+
+  @override
+  String get sessionDetailFileUploading => 'Uploading file to the bridge…';
+
+  @override
+  String get sessionDetailFileUploadStored => 'File saved on the bridge. It remains there until you delete it.';
+
+  @override
   String get sessionDetailRemoveAttachment => 'Remove attachment';
 
   @override

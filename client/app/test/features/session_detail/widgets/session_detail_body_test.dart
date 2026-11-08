@@ -529,6 +529,8 @@ void main() {
               sendKeyPolicy: ComposerSendKeyPolicy.modifierEnterSends,
               presentation: ComposerPresentation.touch,
               attachmentDispatcher: GetIt.instance.get<ComposerAttachmentDispatcher>,
+              fileUploadService: () => throw UnimplementedError(),
+              filePicker: const FlutterComposerFilePicker(),
               imageClipboard: GetIt.instance.get<ImageClipboard>,
               child: PromptInput(
                 initialSelection: null,
@@ -5203,7 +5205,9 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     // The staged image switches the composer to the typing layout so the
@@ -5458,7 +5462,7 @@ void main() {
     verifyNever(() => attachmentDispatcher.attachmentFromBytes(bytes: _tinyPng, filename: null));
   });
 
-  testWidgets("accordion offers no attach action when the plugin declares no support", (tester) async {
+  testWidgets("accordion offers files but not images when the plugin has no image support", (tester) async {
     final state = _loadedState(
       pendingQuestions: const [],
       pendingPermissions: const [],
@@ -5474,9 +5478,10 @@ void main() {
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
 
-    expect(_tooltip("Attach image"), findsNothing);
-    // The accordion still opens for its other action.
-    expect(find.byIcon(TablerRegular.slash), findsOneWidget);
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    expect(find.text("Attach image"), findsNothing);
+    expect(find.text("Attach file"), findsOneWidget);
   });
 
   testWidgets("staged attachment survives unresolved support but cannot send", (tester) async {
@@ -5504,7 +5509,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     states.add(supported.copyWith(supportsPromptAttachments: null));
@@ -5543,7 +5550,9 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(EditableText), "with image");
@@ -5580,7 +5589,9 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     expect(semanticsWithLabel("Attached image"), findsOneWidget);
@@ -5614,13 +5625,17 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
     expect(semanticsWithLabel("small.png"), findsOneWidget);
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     expect(find.text("Attached images are limited to 50 MB per message."), findsOneWidget);
@@ -5637,7 +5652,9 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     expect(find.text("That image is too large to attach."), findsOneWidget);
@@ -5669,7 +5686,9 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(TablerRegular.arrow_up));

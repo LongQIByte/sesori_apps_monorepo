@@ -389,6 +389,7 @@ class _LiveAttachmentHarness({
       database: database,
       chatHistoryDatabase: chatHistory.database,
       attachmentSpillStorage: chatHistory.spillStorage,
+      uploadDirectoryPath: "${chatHistory.directory.path}/uploads",
       archivedSessionStorage: chatHistory.archivedStorage,
       httpClient: httpClient,
       processRunner: NoopProcessRunner(),

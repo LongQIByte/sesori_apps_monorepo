@@ -47,6 +47,7 @@ void main() {
       database: database,
       chatHistoryDatabase: testChatHistory.database,
       attachmentSpillStorage: testChatHistory.spillStorage,
+      uploadDirectoryPath: "${testChatHistory.directory.path}/uploads",
       archivedSessionStorage: testChatHistory.archivedStorage,
       httpClient: httpClient,
       processRunner: ProcessRunner(),

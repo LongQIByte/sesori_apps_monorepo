@@ -35,11 +35,111 @@ class _PendingComposerImagePicker() implements ComposerImagePicker {
 
 class _MockVoiceInputCubit() extends MockCubit<VoiceInputState> implements VoiceInputCubit;
 
+class _MockFileUpload() extends Mock implements ComposerFileUploadService;
+
+class _FakeBridgeHandle() implements ConnectedBridgeHandle;
+
+class _FilePicker({required final ComposerLocalFile file}) implements ComposerFilePicker {
+  @override
+  Future<List<ComposerLocalFile>> pickFiles() async => [file];
+}
+
+class _TestLocalFile() implements ComposerLocalFile {
+  @override
+  String get name => "example.py";
+  @override
+  Future<int> length() async => 3;
+  @override
+  Future<Uint8List> readBytes() async => Uint8List.fromList([1, 2, 3]);
+}
+
 /// The composer's labelled buttons keep their tooltip's words off the semantics
 /// tree, which is what `find.byTooltip` reads.
 Finder _tooltip(String message) => find.byWidgetPredicate((widget) => widget is Tooltip && widget.message == message);
 
 void main() {
+  testWidgets("file selection inserts the bridge path after successful upload", (tester) async {
+    final file = _TestLocalFile();
+    final target = _FakeBridgeHandle();
+    final upload = _MockFileUpload();
+    final bytes = Uint8List.fromList([1, 2, 3]);
+    final pending = Completer<String>();
+    when(upload.captureTarget).thenReturn(target);
+    when(() => upload.isCurrent(target: target)).thenReturn(true);
+    when(() => upload.readFile(file: file)).thenAnswer((_) async => bytes);
+    registerFallbackValue(() => true);
+    when(
+      () => upload.upload(
+        target: target,
+        name: file.name,
+        bytes: bytes,
+        isDraftCurrent: any(named: "isDraftCurrent"),
+      ),
+    ).thenAnswer((_) => pending.future);
+    final surfaceStyle = ValueNotifier(PregoComposerSurfaceStyle.subtle);
+    addTearDown(surfaceStyle.dispose);
+    final dispatcher = ComposerAttachmentDispatcher(imagePicker: _NoOpComposerImagePicker());
+    final clipboard = _NoOpImageClipboard();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [PregoDesignSystem.light]),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ComposerPresentationScope(
+          voiceSupport: ComposerVoiceSupport.unsupported,
+          inputMode: ChatInputMode.textFirst,
+          isKeyboardVisible: false,
+          sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
+          presentation: ComposerPresentation.touch,
+          attachmentDispatcher: () => dispatcher,
+          fileUploadService: () => upload,
+          filePicker: _FilePicker(file: file),
+          imageClipboard: () => clipboard,
+          child: Scaffold(
+            body: PromptInput(
+              initialSelection: null,
+              onBusyChanged: null,
+              onSelectionChanged: null,
+              isBusy: false,
+              hasMessages: false,
+              canSend: true,
+              onSend: ({required draft, required command, required attachments}) {},
+              onVoiceTranscriptionFinished: null,
+              onDraftChanged: (_) {},
+              onDraftCleared: () {},
+              onAbort: () {},
+              surfaceStyleController: surfaceStyle,
+              composerHeader: null,
+              composerTrailing: null,
+              availableCommands: const [],
+              stagedCommand: null,
+              onCommandSelected: (_) {},
+              onCommandCleared: () {},
+              attachmentsSupported: false,
+              draftIdentity: "session",
+              restorationKey: null,
+              initialDraft: ComposerDraft.typed(text: "Review"),
+              initialAttachments: const [],
+              onAttachmentsChanged: null,
+              autofocus: false,
+              onInitialAttachmentsConsumed: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(TablerRegular.chevron_right));
+    await tester.pumpAndSettle();
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach file"));
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, "Review");
+    pending.complete("/bridge/uploads/example.py");
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, contains("/bridge/uploads/example.py"));
+  });
   testWidgets("starts at the handed-over caret and reports busy while an insert or a word is pending", (tester) async {
     final surfaceStyle = ValueNotifier(PregoComposerSurfaceStyle.subtle);
     addTearDown(surfaceStyle.dispose);
@@ -61,6 +161,8 @@ void main() {
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: ComposerPresentation.touch,
           attachmentDispatcher: () => dispatcher,
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: () => clipboard,
           child: Scaffold(
             body: PromptInput(
@@ -105,7 +207,9 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pump();
     expect(busy, [true]);
     picker.pick.complete(null);
@@ -142,7 +246,9 @@ void main() {
     picker.pick = Completer();
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    await tester.tap(_tooltip("Attach image"));
+    await tester.tap(_tooltip("Add attachment"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Attach image").last);
     await tester.pump();
     expect(busy, [true, false, true, false, true, false, true]);
     await tester.pumpWidget(const SizedBox());
@@ -180,6 +286,8 @@ void main() {
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: ComposerPresentation.touch,
           attachmentDispatcher: () => dispatcher,
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: () => clipboard,
           child: Scaffold(
             body: Center(
@@ -281,6 +389,8 @@ void main() {
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: ComposerPresentation.touch,
           attachmentDispatcher: () => dispatcher,
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: () => clipboard,
           child: Scaffold(
             body: Center(
@@ -490,6 +600,8 @@ void main() {
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: ComposerPresentation.touch,
           attachmentDispatcher: () => attachmentDispatcher,
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: () => imageClipboard,
           child: Scaffold(
             body: PromptInput(
@@ -531,7 +643,7 @@ void main() {
 
     await tester.tap(find.byIcon(TablerRegular.chevron_right));
     await tester.pumpAndSettle();
-    expect(_tooltip("Attach image"), findsOneWidget);
+    expect(_tooltip("Add attachment"), findsOneWidget);
     expect(_tooltip("More actions"), findsNothing);
   });
 
@@ -566,6 +678,8 @@ void main() {
               sendKeyPolicy: ComposerSendKeyPolicy.modifierEnterSends,
               presentation: ComposerPresentation.touch,
               attachmentDispatcher: () => attachmentDispatcher,
+              fileUploadService: () => throw UnimplementedError(),
+              filePicker: const FlutterComposerFilePicker(),
               imageClipboard: () => imageClipboard,
               child: Scaffold(
                 body: Column(
@@ -652,6 +766,8 @@ Future<void> _pumpCommandComposer({
       sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
       presentation: ComposerPresentation.touch,
       attachmentDispatcher: () => attachmentDispatcher,
+      fileUploadService: () => throw UnimplementedError(),
+      filePicker: const FlutterComposerFilePicker(),
       imageClipboard: () => imageClipboard,
       child: Scaffold(
         body: PromptInput(

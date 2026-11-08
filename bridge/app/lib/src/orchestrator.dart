@@ -25,6 +25,7 @@ import "api/drive_roots_api.dart";
 import "api/filesystem_api.dart";
 import "api/git_cli_api.dart";
 import "api/sesori_server_api.dart";
+import "api/upload_file_storage.dart";
 import "auth/access_token_provider.dart";
 import "auth/bridge_registration_service.dart";
 import "auth/token_refresher.dart";
@@ -91,6 +92,7 @@ import "repositories/session_repository.dart";
 import "repositories/session_unseen_calculator.dart";
 import "repositories/session_unseen_repository.dart";
 import "repositories/trackers/session_event_tracker.dart";
+import "repositories/upload_file_repository.dart";
 import "repositories/worktree_repository.dart";
 import "routing/abort_session_handler.dart";
 import "routing/cancel_catalog_import_handler.dart";
@@ -162,6 +164,7 @@ import "routing/set_session_approval_override_handler.dart";
 import "routing/set_session_auto_continuation_handler.dart";
 import "routing/start_catalog_import_handler.dart";
 import "routing/update_session_archive_status_handler.dart";
+import "routing/upload_file_handler.dart";
 import "runtime/plugin_runtime.dart";
 import "services/archived_session_validator.dart";
 import "services/bridge_startup_retry_service.dart";
@@ -232,6 +235,7 @@ class Orchestrator({
   required final AppDatabase _database,
   required final ChatHistoryDatabase _chatHistoryDatabase,
   required final AttachmentSpillStorage _attachmentSpillStorage,
+  required final String _uploadDirectoryPath,
   required final ArchivedSessionStorage _archivedSessionStorage,
   required final http.Client _httpClient,
   required final ProcessRunner _processRunner,
@@ -655,6 +659,13 @@ class Orchestrator({
     final normalizedPluginEvents = sessionEventDispatcher.events;
     final router = RequestRouter(
       handlers: [
+        UploadFileHandler(
+          repository: UploadFileRepository(
+            storage: UploadFileStorage(
+              directoryPath: _uploadDirectoryPath,
+            ),
+          ),
+        ),
         HealthCheckHandler(healthRepository: healthRepository),
         GetPluginManagementHandler(lifecycleService: _pluginLifecycleService),
         PostPluginAuthenticationHandler(lifecycleService: _pluginLifecycleService),

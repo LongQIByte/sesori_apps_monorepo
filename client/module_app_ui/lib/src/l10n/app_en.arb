@@ -1026,6 +1026,11 @@
     "description": "Accessibility label of the chevron that expands the composer's advanced-options drawer."
   },
   "sessionDetailAttachImage": "Attach image",
+  "sessionDetailAttachFile": "Attach file",
+  "sessionDetailAttachmentChoices": "Add attachment",
+  "sessionDetailFileUploadFailed": "Could not upload file. Select files up to 50 MB and check the bridge connection.",
+  "sessionDetailFileUploading": "Uploading file to the bridge…",
+  "sessionDetailFileUploadStored": "File saved on the bridge. It remains there until you delete it.",
   "@sessionDetailAttachImage": {
     "description": "Accessibility label of the advanced-options action that opens the gallery picker to attach an image to the next message."
   },

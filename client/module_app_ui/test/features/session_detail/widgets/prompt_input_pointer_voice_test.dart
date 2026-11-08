@@ -787,6 +787,8 @@ Future<void> _pumpPointerComposer({
             sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
             presentation: ComposerPresentation.pointer,
             attachmentDispatcher: () => attachmentDispatcher,
+            fileUploadService: () => throw UnimplementedError(),
+            filePicker: const FlutterComposerFilePicker(),
             imageClipboard: () => imageClipboard,
             child: Scaffold(
               body: PromptInput(

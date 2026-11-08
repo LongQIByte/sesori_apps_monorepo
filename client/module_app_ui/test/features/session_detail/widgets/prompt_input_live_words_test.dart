@@ -849,6 +849,8 @@ class const _ComposerApp({
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: presentation,
           attachmentDispatcher: () => ComposerAttachmentDispatcher(imagePicker: _NoOpComposerImagePicker()),
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: _NoOpImageClipboard.new,
           child: home(const _ComposerHost()),
         ),

@@ -275,6 +275,8 @@ Future<void> _pumpComposer({
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: shell.presentation,
           attachmentDispatcher: () => attachmentDispatcher,
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: () => imageClipboard,
           child: Scaffold(
             body: Align(

@@ -264,6 +264,34 @@ void main() {
       expect(authMessage["bridgeId"], "br_sendfail01");
     });
 
+    test("encrypted relay upload stores a file the bridge can read", () async {
+      final harness = await _RegistrationHarness.start(
+        repository: FakeBridgeRegistrationRepository()..nextBridgeId = "br_upload001",
+      );
+      addTearDown(harness.close);
+      final phone = await _activatePhone(harness: harness, connId: 10);
+      await _sendEncrypted(
+        socket: phone.socket,
+        connId: 10,
+        encryptor: phone.encryptor,
+        message: RelayMessage.request(
+          id: "upload-test",
+          method: "POST",
+          path: "/file/upload",
+          headers: const {},
+          body: jsonEncode(const UploadFileRequest(name: "example.py", base64: "cHJpbnQoMSk=")),
+        ),
+      );
+      final response = await _nextResponse(
+        messages: phone.messages,
+        encryptor: phone.encryptor,
+        requestId: "upload-test",
+      );
+      expect(response.status, 200);
+      final upload = UploadFileResponse.fromJson(jsonDecodeMap(response.body ?? ""));
+      expect(await File(upload.path).readAsString(), "print(1)");
+    });
+
     test("a stale routed response does not count unsent bandwidth", () async {
       final harness = await _RegistrationHarness.start(
         repository: FakeBridgeRegistrationRepository()..nextBridgeId = "br_stale001",
@@ -552,6 +580,7 @@ class _RegistrationHarness._({
       database: database,
       chatHistoryDatabase: testChatHistory.database,
       attachmentSpillStorage: testChatHistory.spillStorage,
+      uploadDirectoryPath: "${testChatHistory.directory.path}/uploads",
       archivedSessionStorage: testChatHistory.archivedStorage,
       httpClient: httpClient,
       processRunner: ProcessRunner(),

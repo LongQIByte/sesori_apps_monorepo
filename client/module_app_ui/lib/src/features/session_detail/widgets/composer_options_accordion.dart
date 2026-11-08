@@ -127,7 +127,7 @@ class _ComposerOptionsAccordionState() extends State<ComposerOptionsAccordion> {
                     if (widget.showAttachImage)
                       _AccordionIconButton(
                         icon: TablerRegular.plus,
-                        tooltip: loc.sessionDetailAttachImage,
+                        tooltip: loc.sessionDetailAttachmentChoices,
                         onTap: widget.actionsEnabled && onAttachImageTap != null
                             ? () {
                                 _collapse();

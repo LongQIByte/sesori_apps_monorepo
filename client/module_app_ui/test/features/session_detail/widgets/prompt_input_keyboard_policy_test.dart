@@ -112,6 +112,8 @@ Future<void> _pumpComposer({
         sendKeyPolicy: sendKeyPolicy,
         presentation: ComposerPresentation.touch,
         attachmentDispatcher: () => attachmentDispatcher,
+        fileUploadService: () => throw UnimplementedError(),
+        filePicker: const FlutterComposerFilePicker(),
         imageClipboard: () => imageClipboard,
         child: Scaffold(
           body: PromptInput(

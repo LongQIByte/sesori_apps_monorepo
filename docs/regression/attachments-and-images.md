@@ -9,10 +9,11 @@ content the transcript renders live and after reload.
 ## Required Behavior
 
 - The shared composer actions pill opens from its chevron to show the supported
-  image-attachment action as a plus and the slash-command picker. Open actions
+  attachment chooser and slash-command picker. The chooser offers files and,
+  when supported, images. Open actions
   replace the chevron, without a manual collapse control, and choosing either
   action automatically collapses the pill. Both themes use the flat bordered
-  44pt surface; command-only harnesses retain a single centred action. Recording
+  44pt surface; harnesses without image support retain file upload and commands. Recording
   and transcription still disable the revealed actions. With a pointer the
   actions show without the chevron. On both surfaces they fold back behind the
   chevron once the composer holds text, and the chevron still reopens them.
@@ -45,6 +46,15 @@ content the transcript renders live and after reload.
   Removing one image preserves the remaining image identities and send bytes;
   removing all images removes the strip. This is image-only staging, not a
   generic file picker.
+- File selection on mobile and desktop and file drop on desktop upload each
+  file (up to 50 MB) over the encrypted relay to the selected bridge. The bridge
+  saves files under its configured data directory in `uploads`; the client inserts
+  the actual bridge path into the current composer. Files remain until manually
+  removed. Selection, reading and upload failures are visible. A bridge or draft
+  switch must not insert the old result, and sending waits for pending uploads.
+  Source, document and video files follow this path independently of harness
+  image capability; directories are not accepted. Old bridges without the route
+  report failure rather than silently dropping a file.
 - Antigravity's descriptor advertises prompt attachments and the shared ACP mapper sends bounded inline image parts.
   Provider-generated image content uses the same shared collection limits after Antigravity removes redundant raw image
   copies; a provider-local image path remains bounded metadata and is never opened or sent to a client.

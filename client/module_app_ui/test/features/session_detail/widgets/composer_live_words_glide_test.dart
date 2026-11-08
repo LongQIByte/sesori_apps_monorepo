@@ -934,6 +934,8 @@ Future<_ScreenState> _pumpScreen({
           sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
           presentation: ComposerPresentation.touch,
           attachmentDispatcher: () => ComposerAttachmentDispatcher(imagePicker: _NoOpComposerImagePicker()),
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: _NoOpImageClipboard.new,
           child: _Screen(buildsRows: buildsRows, rowsArrive: rowsArrive),
         ),
@@ -1111,6 +1113,8 @@ Future<void Function(SessionDetailLoaded Function(SessionDetailLoaded sent) next
           sendKeyPolicy: ComposerSendKeyPolicy.modifierEnterSends,
           presentation: presentation,
           attachmentDispatcher: () => ComposerAttachmentDispatcher(imagePicker: _NoOpComposerImagePicker()),
+          fileUploadService: () => throw UnimplementedError(),
+          filePicker: const FlutterComposerFilePicker(),
           imageClipboard: _NoOpImageClipboard.new,
           child: SentBubbleLanding(
             child: Scaffold(

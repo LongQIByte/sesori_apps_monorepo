@@ -27,6 +27,10 @@ export "package:sesori_auth/sesori_auth.dart"
         NonSuccessCodeError,
         NotAuthenticatedError;
 export "package:sesori_auth/sesori_auth.dart" show ApiResponse, ErrorResponse, SuccessResponse;
+
+export "src/services/composer_file_upload_service.dart";
+export "src/foundation/platform/composer_file_picker.dart";
+
 export "package:sesori_auth/sesori_auth.dart" show HttpApiClient;
 export "package:sesori_auth/sesori_auth.dart" show HttpMethod, SafeApiClient;
 export "package:sesori_shared/sesori_shared.dart" show AccountStatus, AuthProvider;

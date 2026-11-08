@@ -21,6 +21,8 @@ class const DesktopComposerPresentationScope({
       sendKeyPolicy: ComposerSendKeyPolicy.enterSends,
       presentation: ComposerPresentation.pointer,
       attachmentDispatcher: getIt.get<ComposerAttachmentDispatcher>,
+      fileUploadService: getIt.get<ComposerFileUploadService>,
+      filePicker: const FlutterComposerFilePicker(),
       imageClipboard: getIt.get<ImageClipboard>,
       child: child,
     );

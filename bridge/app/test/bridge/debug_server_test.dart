@@ -57,6 +57,7 @@ Future<_DebugServerHarness> _createDebugServerHarness({
     database: db,
     chatHistoryDatabase: testChatHistory.database,
     attachmentSpillStorage: testChatHistory.spillStorage,
+    uploadDirectoryPath: "${testChatHistory.directory.path}/uploads",
     archivedSessionStorage: testChatHistory.archivedStorage,
     httpClient: httpClient,
     processRunner: ProcessRunner(),

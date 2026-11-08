@@ -15,6 +15,7 @@ import "package:theme_prego/interactions/prego_tappable.dart";
 import "package:theme_prego/module_prego.dart";
 
 import "../../../extensions/build_context_x.dart";
+import "../../../platform/flutter_composer_file_picker.dart";
 import "../composer_presentation_scope.dart";
 import "command_picker.dart";
 import "composer_live_words.dart";
@@ -237,6 +238,7 @@ class _PromptInputState() extends State<PromptInput> {
   bool _reportedBusy = false;
   bool _voiceBusy = false;
   int _pendingInserts = 0;
+  int _pendingFileInserts = 0;
   _VoiceGesturePresentation _voiceInteraction = const _VoiceIdle();
   VoiceInputState _renderedVoiceState = const VoiceInputState.idle();
   StreamSubscription<VoiceInputState>? _voiceStateSub;
@@ -254,6 +256,7 @@ class _PromptInputState() extends State<PromptInput> {
   /// picker's anchor.
   bool _typingPinnedByPicker = false;
   bool _optionsOpen = false;
+  bool _choosingAttachments = false;
 
   /// Whether the field holds sendable text. Mirrored into state so the
   /// composer only rebuilds when emptiness flips (layout + send/stop swap),
@@ -511,7 +514,10 @@ class _PromptInputState() extends State<PromptInput> {
 
   bool get _hasSendableContent {
     final hasContent = _hasText || widget.stagedCommand != null || _attachments.isNotEmpty;
-    return widget.canSend && hasContent && (_attachments.isEmpty || (widget.attachmentsSupported ?? false));
+    return widget.canSend &&
+        _pendingFileInserts == 0 &&
+        hasContent &&
+        (_attachments.isEmpty || (widget.attachmentsSupported ?? false));
   }
 
   /// Switches to the typing layout and raises the keyboard. Focus is
@@ -563,7 +569,7 @@ class _PromptInputState() extends State<PromptInput> {
   /// Sends the composer's content and reports whether it went out; a refusal
   /// leaves everything where it is.
   Future<bool> _submitComposer({required bool fromDictation}) async {
-    if (_isSubmitting || !widget.canSend) return false;
+    if (_isSubmitting || !widget.canSend || _pendingFileInserts > 0) return false;
 
     final wasFocused = _focusNode.hasFocus;
     final stagedCommand = widget.stagedCommand;
@@ -1364,7 +1370,13 @@ class _PromptInputState() extends State<PromptInput> {
       },
       child: Focus(
         focusNode: _composerFocusNode,
-        child: _buildComposerColumn(context, capabilities: capabilities),
+        child: pointer
+            ? ComposerFileDropTarget(
+                onFiles: (files) => unawaited(_startFileDrop(files)),
+                onUnsupportedDrop: () => _showComposerNotice(context.loc.sessionDetailFileUploadFailed),
+                child: _buildComposerColumn(context, capabilities: capabilities),
+              )
+            : _buildComposerColumn(context, capabilities: capabilities),
       ),
     );
   }
@@ -1855,7 +1867,7 @@ class _PromptInputState() extends State<PromptInput> {
           // Open, the options reach past the room the words keep from the row's
           // actions. On both sides, so that words with room to spare stay put.
           extraSideWidth: _optionsOpen && _voicePresentation == _VoicePresentation.idle
-              ? ComposerOptionsAccordion.openWidth(showAttachImage: _offersAttachImage) - _actionButtonSize
+              ? ComposerOptionsAccordion.openWidth(showAttachImage: true) - _actionButtonSize
               : 0,
         ),
       ),
@@ -1995,7 +2007,7 @@ class _PromptInputState() extends State<PromptInput> {
   /// The insets narrow the caption to that slot as it rests, so the words sit and
   /// clip as they would inside it. The tap target in the slot speaks for them.
   Widget _buildPointerCaptionHint(BuildContext context, {required Widget hint}) {
-    final optionsWidth = ComposerOptionsAccordion.openWidth(showAttachImage: _offersAttachImage);
+    final optionsWidth = ComposerOptionsAccordion.openWidth(showAttachImage: _offersAttachImage || _optionsOpen);
     return ExcludeSemantics(
       child: SizedBox(
         height: _actionButtonSize,
@@ -2506,30 +2518,141 @@ class _PromptInputState() extends State<PromptInput> {
       },
       triggerBuilder: (context, toggle) => ComposerOptionsAccordion(
         actionsEnabled: _voicePresentation == _VoicePresentation.idle,
-        alwaysOpen: ComposerPresentationScope.of(context).presentation == ComposerPresentation.pointer,
+        alwaysOpen:
+            ComposerPresentationScope.of(context).presentation == ComposerPresentation.pointer &&
+            (widget.attachmentsSupported ?? true),
         isTyping: _hasText,
-        showAttachImage: _offersAttachImage,
+        showAttachImage: true,
         onSlashCommandsTap: () {
+          setState(() => _choosingAttachments = false);
           _typingPinnedByPicker = _layout == ComposerSurfaceLayout.typing;
           toggle();
         },
-        onAttachImageTap: (widget.attachmentsSupported ?? false) ? _handleAttachImage : null,
+        onAttachImageTap: () {
+          setState(() => _choosingAttachments = true);
+          _typingPinnedByPicker = _layout == ComposerSurfaceLayout.typing;
+          toggle();
+        },
         onOpenChanged: (isOpen) {
           if (isOpen != _optionsOpen) setState(() => _optionsOpen = isOpen);
         },
       ),
-      contentBuilder: (context, close) => CommandPicker(
-        commands: widget.availableCommands,
-        onCommandSelected: (command) {
-          close();
-          // App shortcuts can change the session under the open picker.
-          if (!mounted) return;
-          widget.onCommandSelected(command);
-          _focusComposerField();
-        },
-        onClose: close,
-      ),
+      contentBuilder: (context, close) => _choosingAttachments
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.attachmentsSupported ?? false)
+                  PregoButtonsSolid(
+                    label: context.loc.sessionDetailAttachImage,
+                    hierarchy: PregoButtonsSolidHierarchy.secondary,
+                    size: PregoButtonsSolidSize.lg,
+                    fullWidth: true,
+                    onPressed: () {
+                      close();
+                      unawaited(_handleAttachImage());
+                    },
+                  ),
+                PregoButtonsSolid(
+                  label: context.loc.sessionDetailAttachFile,
+                  hierarchy: PregoButtonsSolidHierarchy.secondary,
+                  size: PregoButtonsSolidSize.lg,
+                  fullWidth: true,
+                  onPressed: () {
+                    close();
+                    unawaited(_pickFiles());
+                  },
+                ),
+              ],
+            )
+          : CommandPicker(
+              commands: widget.availableCommands,
+              onCommandSelected: (command) {
+                close();
+                // App shortcuts can change the session under the open picker.
+                if (!mounted) return;
+                widget.onCommandSelected(command);
+                _focusComposerField();
+              },
+              onClose: close,
+            ),
     );
+  }
+
+  Future<void> _pickFiles() async {
+    final draftIdentity = widget.draftIdentity;
+    _startFileInsert();
+    try {
+      final upload = ComposerPresentationScope.read(context).fileUploadService();
+      final target = upload.captureTarget();
+      final selected = await ComposerPresentationScope.read(context).filePicker.pickFiles();
+      if (mounted && draftIdentity == widget.draftIdentity) {
+        await _uploadFiles(selected, upload: upload, target: target, draftIdentity: draftIdentity);
+      }
+    } catch (error, stackTrace) {
+      loge("Failed to select files", error, stackTrace);
+      if (mounted) _showComposerNotice(context.loc.sessionDetailFileUploadFailed);
+    } finally {
+      _settleFileInsert();
+    }
+  }
+
+  Future<void> _startFileDrop(List<ComposerLocalFile> selected) async {
+    try {
+      final upload = ComposerPresentationScope.read(context).fileUploadService();
+      await _uploadFiles(selected, upload: upload, target: upload.captureTarget(), draftIdentity: widget.draftIdentity);
+    } catch (error, stackTrace) {
+      loge("Failed to start file upload", error, stackTrace);
+      if (mounted) _showComposerNotice(context.loc.sessionDetailFileUploadFailed);
+    }
+  }
+
+  Future<void> _uploadFiles(
+    List<ComposerLocalFile> selected, {
+    required ComposerFileUploadService upload,
+    required ConnectedBridgeHandle target,
+    required String draftIdentity,
+  }) async {
+    if (selected.isEmpty) return;
+    _startFileInsert();
+    _showComposerNotice(context.loc.sessionDetailFileUploading, variant: PregoPopupAlertsNotificationsVariant.info);
+    try {
+      for (final file in selected) {
+        if (!mounted || draftIdentity != widget.draftIdentity || !upload.isCurrent(target: target)) return;
+        final bytes = await upload.readFile(file: file);
+        if (!mounted || draftIdentity != widget.draftIdentity || !upload.isCurrent(target: target)) return;
+        final path = await upload.upload(
+          target: target,
+          name: file.name,
+          bytes: bytes,
+          isDraftCurrent: () => mounted && draftIdentity == widget.draftIdentity,
+        );
+        if (!mounted || draftIdentity != widget.draftIdentity) return;
+        final value = _controller.value;
+        final selection = value.selection.isValid
+            ? value.selection
+            : TextSelection.collapsed(offset: value.text.length);
+        final inserted = "\n$path\n";
+        _controller.value = value.copyWith(
+          text: value.text.replaceRange(selection.start, selection.end, inserted),
+          selection: TextSelection.collapsed(offset: selection.start + inserted.length),
+          composing: TextRange.empty,
+        );
+      }
+      if (mounted) {
+        _showComposerNotice(
+          context.loc.sessionDetailFileUploadStored,
+          variant: PregoPopupAlertsNotificationsVariant.info,
+        );
+      }
+    } catch (error, stackTrace) {
+      loge("Failed to upload file", error, stackTrace);
+      if (mounted && draftIdentity == widget.draftIdentity) {
+        _showComposerNotice(context.loc.sessionDetailFileUploadFailed);
+      }
+    } finally {
+      _settleFileInsert();
+    }
   }
 
   /// Stages a gallery image for the next submission. Adding one switches the
@@ -2567,13 +2690,27 @@ class _PromptInputState() extends State<PromptInput> {
   }
 
   /// An image pick or a paste, whose result lands after an await.
+  void _startFileInsert() {
+    _pendingFileInserts++;
+    _startInsert();
+  }
+
+  void _settleFileInsert() {
+    _pendingFileInserts--;
+    _settleInsert();
+  }
+
   void _startInsert() {
-    _pendingInserts++;
+    setState(() => _pendingInserts++);
     _reportBusy();
   }
 
   void _settleInsert() {
-    _pendingInserts--;
+    if (mounted) {
+      setState(() => _pendingInserts--);
+    } else {
+      _pendingInserts--;
+    }
     _reportBusy();
   }
 

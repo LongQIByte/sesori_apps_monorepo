@@ -25,6 +25,12 @@ class const ClockProvider() {
   DateTime call() => DateTime.now();
 }
 
+/// Opaque snapshot of the connected bridge for operations spanning awaits.
+abstract interface class ConnectedBridgeHandle();
+
+final class const _ConnectedBridgeHandle({required final RelayClient connection, required final String bridgeId})
+    implements ConnectedBridgeHandle;
+
 @immutable
 final class const ConnectionNotificationObservationHandle._({
   required final RelayClient _connection,
@@ -277,6 +283,23 @@ class ConnectionService(
   };
 
   RelayClient? get relayClient => _relayClient;
+
+  ConnectedBridgeHandle? captureConnectedBridge() {
+    final connection = _relayClient;
+    if (connection == null || !connection.isConnected) return null;
+    final bridgeId = connection.reportedBridgeId ?? activeConfig?.bridgeId;
+    if (bridgeId == null || bridgeId.isEmpty) return null;
+    return _ConnectedBridgeHandle(connection: connection, bridgeId: bridgeId);
+  }
+
+  bool isConnectedBridgeCurrent({required ConnectedBridgeHandle handle}) {
+    final connection = _relayClient;
+    return handle is _ConnectedBridgeHandle &&
+        identical(connection, handle.connection) &&
+        connection != null &&
+        connection.isConnected &&
+        (connection.reportedBridgeId ?? activeConfig?.bridgeId) == handle.bridgeId;
+  }
 
   ConnectionNotificationObservationHandle? captureConnectionNotificationObservation() {
     final connection = _relayClient;

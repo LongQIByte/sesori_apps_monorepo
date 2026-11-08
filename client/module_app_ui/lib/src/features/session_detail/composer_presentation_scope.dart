@@ -45,6 +45,8 @@ class const ComposerPresentationScope({
   required final ComposerSendKeyPolicy sendKeyPolicy,
   required final ComposerPresentation presentation,
   required final ComposerCapabilityProvider<ComposerAttachmentDispatcher> attachmentDispatcher,
+  required final ComposerCapabilityProvider<ComposerFileUploadService> fileUploadService,
+  required final ComposerFilePicker filePicker,
   required final ComposerCapabilityProvider<ImageClipboard> imageClipboard,
   required super.child,
 }) extends InheritedWidget {
@@ -66,5 +68,7 @@ class const ComposerPresentationScope({
       sendKeyPolicy != oldWidget.sendKeyPolicy ||
       presentation != oldWidget.presentation ||
       attachmentDispatcher != oldWidget.attachmentDispatcher ||
+      fileUploadService != oldWidget.fileUploadService ||
+      filePicker != oldWidget.filePicker ||
       imageClipboard != oldWidget.imageClipboard;
 }

@@ -2,6 +2,7 @@
 library;
 
 export "src/extensions/appearance_mode_x.dart";
+export "src/platform/flutter_composer_file_picker.dart";
 export "src/extensions/build_context_x.dart";
 export "src/extensions/login_failed_reason_x.dart";
 export "src/extensions/remote_failure_x.dart";

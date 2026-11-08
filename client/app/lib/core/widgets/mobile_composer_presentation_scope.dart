@@ -22,6 +22,8 @@ class const MobileComposerPresentationScope({
         sendKeyPolicy: ComposerSendKeyPolicy.modifierEnterSends,
         presentation: ComposerPresentation.touch,
         attachmentDispatcher: getIt.get<ComposerAttachmentDispatcher>,
+        fileUploadService: getIt.get<ComposerFileUploadService>,
+        filePicker: const FlutterComposerFilePicker(),
         imageClipboard: getIt.get<ImageClipboard>,
         child: child,
       ),

@@ -58,6 +58,7 @@ import 'package:sesori_dart_core/src/api/storage/product_analytics_preference_st
     as _i197;
 import 'package:sesori_dart_core/src/api/storage/session_launch_storage.dart'
     as _i384;
+import 'package:sesori_dart_core/src/api/upload_file_api.dart' as _i976;
 import 'package:sesori_dart_core/src/api/view_declaration_api.dart' as _i37;
 import 'package:sesori_dart_core/src/api/voice_mode_config_api.dart' as _i276;
 import 'package:sesori_dart_core/src/capabilities/relay/room_key_storage.dart'
@@ -180,6 +181,8 @@ import 'package:sesori_dart_core/src/repositories/session_launch_repository.dart
     as _i818;
 import 'package:sesori_dart_core/src/repositories/session_repository.dart'
     as _i7;
+import 'package:sesori_dart_core/src/repositories/upload_file_repository.dart'
+    as _i398;
 import 'package:sesori_dart_core/src/repositories/view_declaration_repository.dart'
     as _i143;
 import 'package:sesori_dart_core/src/repositories/voice_mode_repository.dart'
@@ -202,6 +205,8 @@ import 'package:sesori_dart_core/src/services/catalog_rescan_service.dart'
     as _i572;
 import 'package:sesori_dart_core/src/services/composer_attachment_dispatcher.dart'
     as _i705;
+import 'package:sesori_dart_core/src/services/composer_file_upload_service.dart'
+    as _i819;
 import 'package:sesori_dart_core/src/services/connection_notification_observation_service.dart'
     as _i959;
 import 'package:sesori_dart_core/src/services/feedback_prompt_service.dart'
@@ -669,6 +674,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i603.SessionApi>(
       () => _i603.SessionApi(client: gh<_i857.RelayHttpApiClient>()),
     );
+    gh.lazySingleton<_i976.UploadFileApi>(
+      () => _i976.UploadFileApi(client: gh<_i857.RelayHttpApiClient>()),
+    );
     gh.lazySingleton<_i143.ViewDeclarationRepository>(
       () => _i143.ViewDeclarationRepository(api: gh<_i37.ViewDeclarationApi>()),
     );
@@ -677,6 +685,9 @@ extension GetItInjectableX on _i174.GetIt {
         api: gh<_i734.ProjectApi>(),
         filesystemApi: gh<_i1068.FilesystemApi>(),
       ),
+    );
+    gh.lazySingleton<_i398.UploadFileRepository>(
+      () => _i398.UploadFileRepository(api: gh<_i976.UploadFileApi>()),
     );
     gh.lazySingleton<_i703.ProjectListService>(
       () => _i703.ProjectListService(repository: gh<_i80.ProjectRepository>()),
@@ -706,6 +717,12 @@ extension GetItInjectableX on _i174.GetIt {
         connectionService: gh<_i369.ConnectionService>(),
       ),
       dispose: (i) => i.dispose(),
+    );
+    gh.lazySingleton<_i819.ComposerFileUploadService>(
+      () => _i819.ComposerFileUploadService(
+        repository: gh<_i398.UploadFileRepository>(),
+        connection: gh<_i369.ConnectionService>(),
+      ),
     );
     gh.lazySingleton<_i7.SessionRepository>(
       () => _i7.SessionRepository(api: gh<_i603.SessionApi>()),

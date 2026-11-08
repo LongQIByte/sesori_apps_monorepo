@@ -2509,6 +2509,36 @@ abstract class AppLocalizations {
   /// **'Attach image'**
   String get sessionDetailAttachImage;
 
+  /// No description provided for @sessionDetailAttachFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach file'**
+  String get sessionDetailAttachFile;
+
+  /// No description provided for @sessionDetailAttachmentChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Add attachment'**
+  String get sessionDetailAttachmentChoices;
+
+  /// No description provided for @sessionDetailFileUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not upload file. Select files up to 50 MB and check the bridge connection.'**
+  String get sessionDetailFileUploadFailed;
+
+  /// No description provided for @sessionDetailFileUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading file to the bridge…'**
+  String get sessionDetailFileUploading;
+
+  /// No description provided for @sessionDetailFileUploadStored.
+  ///
+  /// In en, this message translates to:
+  /// **'File saved on the bridge. It remains there until you delete it.'**
+  String get sessionDetailFileUploadStored;
+
   /// Accessibility label of the badge on a staged attachment thumbnail that removes it from the composer.
   ///
   /// In en, this message translates to:

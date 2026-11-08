@@ -780,6 +780,7 @@ class const BridgeRuntimeRunner._() {
         database: database,
         chatHistoryDatabase: chatHistoryDatabase,
         attachmentSpillStorage: attachmentSpillStorage,
+        uploadDirectoryPath: path.join(options.dataDirectory, "uploads"),
         archivedSessionStorage: archivedSessionStorage,
         httpClient: httpClient,
         processRunner: processRunner,
